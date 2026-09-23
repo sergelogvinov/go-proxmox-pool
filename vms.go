@@ -66,22 +66,21 @@ func (c *Cluster) GetVMConfig(ctx context.Context, vmID int) (*VMDetails, error)
 		return nil, err
 	}
 
-	status, err := px.Nodes(rs.Node).Qemu().Status(ctx, vmID)
-	if err != nil {
-		return nil, err
-	}
+	// status, err := px.Nodes(rs.Node).Qemu().Status(ctx, vmID)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	details := &VMDetails{
 		VMID:   rs.VMID,
 		Node:   rs.Node,
-		Name:   status.Name,
-		CPUs:   status.CPUs,
-		MaxMem: status.MaxMem,
+		Name:   rs.Name,
+		CPUs:   rs.MaxCPU,
+		MaxMem: rs.MaxMem,
 	}
 
 	if cfg.SMBios1 != nil {
 		details.UUID = cfg.SMBios1.UUID
-
 		if details.UUID != "" {
 			c.pool.uuidStore(details.UUID, uuidIndexEntry{cluster: c.name, vmID: rs.VMID})
 		}

@@ -23,7 +23,7 @@ type VMDetails struct {
 	VMID   int
 	Node   string
 	Name   string
-	CPUs   float64
+	CPUs   int
 	MaxMem int64
 	UUID   string
 	Type   string
