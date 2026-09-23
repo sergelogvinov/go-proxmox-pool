@@ -93,8 +93,50 @@ func (c *Cluster) GetVMConfig(ctx context.Context, vmID int) (*VMDetails, error)
 	return details, nil
 }
 
+// nextIDReservationTTL bounds how long a VMID returned by GetNextID is held
+// out of that VMID being handed out again by this cluster's GetNextID —
+// long enough for the caller to actually create the guest. Proxmox's own
+// GET /cluster/nextid has no notion of an in-flight reservation: two
+// concurrent GetNextID callers racing ahead of a slow clone/create would
+// otherwise both be told the same free ID.
+const nextIDReservationTTL = 5 * time.Minute
+
+// nextIDKey identifies one (cluster, vmid) reservation in the pool's
+// next-ID cache.
+type nextIDKey struct {
+	cluster string
+	vmid    int
+}
+
+// nextIDReserved reports whether vmid is still held by a not-yet-expired
+// GetNextID reservation on cluster, evicting it first if it has expired.
+func (p *ProxmoxPool) nextIDReserved(cluster string, vmid int) bool {
+	key := nextIDKey{cluster: cluster, vmid: vmid}
+
+	v, ok := p.nextIDCache.Load(key)
+	if !ok {
+		return false
+	}
+
+	if time.Now().After(v.(time.Time)) { //nolint:forcetypeassert
+		p.nextIDCache.Delete(key)
+
+		return false
+	}
+
+	return true
+}
+
+// reserveNextID records that vmid was just returned by GetNextID on
+// cluster, so it isn't handed out again until nextIDReservationTTL passes.
+func (p *ProxmoxPool) reserveNextID(cluster string, vmid int) {
+	p.nextIDCache.Store(nextIDKey{cluster: cluster, vmid: vmid}, time.Now().Add(nextIDReservationTTL))
+}
+
 // GetNextID finds the next unused VMID starting at hint, incrementing and
-// retrying on Proxmox's "already in use" (400) response.
+// retrying on Proxmox's "already in use" (400) response, and skipping any
+// VMID already reserved by a recent GetNextID call on this cluster (see
+// nextIDReservationTTL) without spending an API call to find that out.
 func (c *Cluster) GetNextID(ctx context.Context, hint int) (int, error) {
 	px, err := c.client()
 	if err != nil {
@@ -102,17 +144,27 @@ func (c *Cluster) GetNextID(ctx context.Context, hint int) (int, error) {
 	}
 
 	for {
+		if c.pool.nextIDReserved(c.name, hint) {
+			hint++
+
+			continue
+		}
+
 		id, err := px.Cluster().NextID(ctx, hint)
-		if err == nil {
-			return id, nil
+		if err != nil {
+			var apiErr *proxmoxrest.APIError
+			if !errors.As(err, &apiErr) || apiErr.StatusCode != http.StatusBadRequest {
+				return 0, err
+			}
+
+			hint++
+
+			continue
 		}
 
-		var apiErr *proxmoxrest.APIError
-		if !errors.As(err, &apiErr) || apiErr.StatusCode != http.StatusBadRequest {
-			return 0, err
-		}
+		c.pool.reserveNextID(c.name, id)
 
-		hint++
+		return id, nil
 	}
 }
 

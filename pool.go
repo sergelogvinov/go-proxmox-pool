@@ -47,12 +47,13 @@ type ClusterConfig struct {
 }
 
 // ProxmoxPool is a pool of Proxmox REST clients, one per configured
-// cluster, plus the shared resource cache and UUID index every Cluster
-// handle obtained from it reads and writes.
+// cluster, plus the shared resource cache, UUID index, and next-ID
+// reservation cache every Cluster handle obtained from it reads and writes.
 type ProxmoxPool struct {
-	clients   map[string]*proxmoxrest.Client
-	cache     *resourceCache
-	uuidIndex sync.Map // string (uuid) -> uuidIndexEntry
+	clients     map[string]*proxmoxrest.Client
+	cache       *resourceCache
+	uuidIndex   sync.Map // string (uuid) -> uuidIndexEntry
+	nextIDCache sync.Map // nextIDKey -> time.Time (expiry), see vms.go
 }
 
 // NewProxmoxPool creates a new Proxmox cluster client pool.
