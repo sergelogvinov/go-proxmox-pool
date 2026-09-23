@@ -34,12 +34,6 @@ type Cluster struct {
 	name string
 }
 
-// client resolves the handle's underlying REST client, surfacing
-// ErrClusterNotFound if the cluster was never configured.
-func (c *Cluster) client() (*proxmoxrest.Client, error) {
-	return c.pool.Get(c.name)
-}
-
 // Check probes the cluster's connectivity and permissions: it fetches the
 // Proxmox version and lists VM resources, the same check today's
 // CheckClusters performed per cluster.
@@ -71,6 +65,7 @@ func (c *Cluster) List(ctx context.Context, kind ResourceKind, opts ...ListOptio
 	}
 
 	var o listOptions
+
 	for _, opt := range opts {
 		if opt != nil {
 			opt(&o)
@@ -160,4 +155,10 @@ func (c *Cluster) Get(ctx context.Context, kind ResourceKind, id string) (*pxclu
 	}
 
 	return &resources[0], nil
+}
+
+// client resolves the handle's underlying REST client, surfacing
+// ErrClusterNotFound if the cluster was never configured.
+func (c *Cluster) client() (*proxmoxrest.Client, error) {
+	return c.pool.Get(c.name)
 }

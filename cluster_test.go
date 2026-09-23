@@ -195,6 +195,60 @@ func TestClusterListWithUUID(t *testing.T) {
 	assert.Len(t, vms, 0)
 }
 
+func TestClusterListWithUUIDIsCaseInsensitive(t *testing.T) {
+	cl := fakeapi.NewCluster(t, fakeapi.WithNodes("pve1"))
+	cl.Node("pve1").AddVM(100, &qemu.Config{Name: "vm-100", SMBios1: &qemu.SMBios1{UUID: "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE"}})
+
+	pool := newFakePool(t, cl)
+	c := pool.Cluster("cluster-1")
+
+	vms, err := c.List(t.Context(), pxpool.ResourceKindVM, pxpool.WithUUID("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"))
+	assert.Nil(t, err)
+	assert.Len(t, vms, 1)
+	assert.Equal(t, 100, vms[0].VMID)
+
+	// Second lookup, differently-cased again, must also hit — proving the
+	// match isn't just a lucky case-preserving warm-index round trip.
+	vms, err = c.List(t.Context(), pxpool.ResourceKindVM, pxpool.WithUUID("AaAaAaAa-BbBb-CcCc-DdDd-EeEeEeEeEeEe"))
+	assert.Nil(t, err)
+	assert.Len(t, vms, 1)
+	assert.Equal(t, 100, vms[0].VMID)
+}
+
+// TestClusterListWithUUIDIndexKeyIsCaseNormalized proves the UUID index
+// itself is keyed case-insensitively, not just the fallback scan: once
+// warmed by one casing, a lookup by a different casing must short-circuit
+// via the index (same evidence TestClusterListWithUUIDWrongClusterShortCircuits
+// uses for the exact-case case — an empty, no-VM cluster returning nothing
+// for a UUID indexed elsewhere).
+func TestClusterListWithUUIDIndexKeyIsCaseNormalized(t *testing.T) {
+	cl1 := fakeapi.NewCluster(t, fakeapi.WithNodes("pve1"))
+	cl1.Node("pve1").AddVM(100, &qemu.Config{Name: "vm-100", SMBios1: &qemu.SMBios1{UUID: "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE"}})
+
+	cl2 := fakeapi.NewCluster(t, fakeapi.WithNodes("pve2"))
+
+	pool, err := pxpool.NewProxmoxPool([]*pxpool.ClusterConfig{
+		{Region: "cluster-1"},
+		{Region: "cluster-2"},
+	})
+	assert.Nil(t, err)
+	pool.Set("cluster-1", cl1.Client(t))
+	pool.Set("cluster-2", cl2.Client(t))
+
+	vms, err := pool.Cluster("cluster-1").List(t.Context(), pxpool.ResourceKindVM,
+		pxpool.WithUUID("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"))
+	assert.Nil(t, err)
+	assert.Len(t, vms, 1)
+
+	// Indexed under the lowercase key above; querying cluster-2 with the
+	// original uppercase casing must still hit that same index entry and
+	// short-circuit to empty rather than falling through to a fresh scan.
+	vms, err = pool.Cluster("cluster-2").List(t.Context(), pxpool.ResourceKindVM,
+		pxpool.WithUUID("AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE"))
+	assert.Nil(t, err)
+	assert.Len(t, vms, 0)
+}
+
 func TestClusterListWithUUIDWrongClusterShortCircuits(t *testing.T) {
 	cl1 := fakeapi.NewCluster(t, fakeapi.WithNodes("pve1"))
 	cl1.Node("pve1").AddVM(100, &qemu.Config{Name: "vm-100", SMBios1: &qemu.SMBios1{UUID: "uuid-a"}})

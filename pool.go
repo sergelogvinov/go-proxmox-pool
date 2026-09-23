@@ -33,11 +33,12 @@ type ClusterConfig struct {
 	// Region is the selector: pool.List()/pool.Get()/pool.Cluster()
 	// all key on this value.
 	Region string `yaml:"region,omitempty"`
+
 	// Proxmox REST API connection details.
-	URL      string `yaml:"url"`
-	CAFile   string `yaml:"ca_file,omitempty"`
-	Insecure bool   `yaml:"insecure,omitempty"`
-	TokenID  string `yaml:"token_id,omitempty"`
+	URL             string `yaml:"url"`
+	CAFile          string `yaml:"ca_file,omitempty"`
+	Insecure        bool   `yaml:"insecure,omitempty"`
+	TokenID         string `yaml:"token_id,omitempty"`
 	TokenIDFile     string `yaml:"token_id_file,omitempty"`
 	TokenSecret     string `yaml:"token_secret,omitempty"`
 	TokenSecretFile string `yaml:"token_secret_file,omitempty"`

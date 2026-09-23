@@ -18,6 +18,7 @@ package proxmoxpool
 
 import (
 	"context"
+	"strings"
 
 	proxmoxrest "github.com/sergelogvinov/go-proxmox-rest"
 	pxcluster "github.com/sergelogvinov/go-proxmox-rest/cluster"
@@ -108,8 +109,9 @@ type uuidIndexEntry struct {
 }
 
 // uuidLookup returns the pool's remembered resolution for uuid, if any.
+// uuid is matched case-insensitively (see uuidStore).
 func (p *ProxmoxPool) uuidLookup(uuid string) (uuidIndexEntry, bool) {
-	v, ok := p.uuidIndex.Load(uuid)
+	v, ok := p.uuidIndex.Load(strings.ToLower(uuid))
 	if !ok {
 		return uuidIndexEntry{}, false
 	}
@@ -119,15 +121,17 @@ func (p *ProxmoxPool) uuidLookup(uuid string) (uuidIndexEntry, bool) {
 	return entry, ok
 }
 
-// uuidStore remembers that uuid resolves to entry.
+// uuidStore remembers that uuid resolves to entry. uuid is lowercased
+// before use as the index key so that differently-cased lookups for the
+// same UUID (SMBIOS UUIDs are case-insensitive) share one entry.
 func (p *ProxmoxPool) uuidStore(uuid string, entry uuidIndexEntry) {
-	p.uuidIndex.Store(uuid, entry)
+	p.uuidIndex.Store(strings.ToLower(uuid), entry)
 }
 
 // uuidEvict forgets a stale resolution for uuid (its VM no longer appears
 // in the cluster it pointed to).
 func (p *ProxmoxPool) uuidEvict(uuid string) {
-	p.uuidIndex.Delete(uuid)
+	p.uuidIndex.Delete(strings.ToLower(uuid))
 }
 
 // resolveByUUID narrows candidates (already filtered by every other
@@ -170,7 +174,7 @@ func resolveByUUID(ctx context.Context, c *Cluster, px *proxmoxrest.Client, uuid
 			return nil, err
 		}
 
-		if cfg.SMBios1 != nil && cfg.SMBios1.UUID == uuid {
+		if cfg.SMBios1 != nil && strings.EqualFold(cfg.SMBios1.UUID, uuid) {
 			c.pool.uuidStore(uuid, uuidIndexEntry{cluster: c.name, vmID: rs.VMID})
 
 			return candidates[i : i+1 : i+1], nil
