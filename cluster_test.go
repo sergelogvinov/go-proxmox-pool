@@ -34,7 +34,7 @@ import (
 func newFakePool(t *testing.T, cl *fakeapi.Cluster, options ...pxpool.Option) *pxpool.ProxmoxPool {
 	t.Helper()
 
-	pool, err := pxpool.NewProxmoxPool([]*pxpool.ClusterConfig{{ClusterName: "cluster-1"}}, options...)
+	pool, err := pxpool.NewProxmoxPool([]*pxpool.ClusterConfig{{Region: "cluster-1"}}, options...)
 	assert.Nil(t, err)
 
 	pool.Set("cluster-1", cl.Client(t))
@@ -93,7 +93,7 @@ func TestClusterListFiltersClientSide(t *testing.T) {
 }
 
 func TestClusterListMissingClusterSurfacesErrOnFirstUse(t *testing.T) {
-	pool, err := pxpool.NewProxmoxPool([]*pxpool.ClusterConfig{{ClusterName: "cluster-1"}})
+	pool, err := pxpool.NewProxmoxPool([]*pxpool.ClusterConfig{{Region: "cluster-1"}})
 	assert.Nil(t, err)
 
 	c := pool.Cluster("missing")
@@ -202,8 +202,8 @@ func TestClusterListWithUUIDWrongClusterShortCircuits(t *testing.T) {
 	cl2 := fakeapi.NewCluster(t, fakeapi.WithNodes("pve2"))
 
 	pool, err := pxpool.NewProxmoxPool([]*pxpool.ClusterConfig{
-		{ClusterName: "cluster-1"},
-		{ClusterName: "cluster-2"},
+		{Region: "cluster-1"},
+		{Region: "cluster-2"},
 	})
 	assert.Nil(t, err)
 	pool.Set("cluster-1", cl1.Client(t))

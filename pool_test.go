@@ -32,14 +32,14 @@ func newClusterEnv() []*pxpool.ClusterConfig {
 			Insecure:    false,
 			TokenID:     "user!token-id",
 			TokenSecret: "secret",
-			ClusterName: "cluster-1",
+			Region:      "cluster-1",
 		},
 		{
 			URL:         "https://127.0.0.2:8006/api2/json",
 			Insecure:    false,
 			TokenID:     "user!token-id",
 			TokenSecret: "secret",
-			ClusterName: "cluster-2",
+			Region:      "cluster-2",
 		},
 	}
 
@@ -53,7 +53,7 @@ func newClusterEnvWithFiles(tokenIDPath, tokenSecretPath string) []*pxpool.Clust
 			Insecure:        false,
 			TokenIDFile:     tokenIDPath,
 			TokenSecretFile: tokenSecretPath,
-			ClusterName:     "cluster-1",
+			Region:          "cluster-1",
 		},
 	}
 

@@ -30,8 +30,8 @@ func main() {
 
 	pool, err := pxpool.NewProxmoxPool(
 		[]*pxpool.ClusterConfig{
-			{ClusterName: "cluster-1"},
-			{ClusterName: "cluster-2"},
+			{Region: "cluster-1"},
+			{Region: "cluster-2"},
 		},
 		pxpool.WithCacheTTL(pxpool.ResourceKindVM, vmCacheTTL),
 	)

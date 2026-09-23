@@ -30,19 +30,19 @@ import (
 type ClusterConfig struct {
 	// Name is an optional display label — metadata only.
 	Name string `yaml:"name,omitempty"`
+	// Region is the selector: pool.List()/pool.Get()/pool.Cluster()
+	// all key on this value.
+	Region string `yaml:"region,omitempty"`
 	// Proxmox REST API connection details.
-	URL             string `yaml:"url"`
-	Insecure        bool   `yaml:"insecure,omitempty"`
-	TokenID         string `yaml:"token_id,omitempty"`
+	URL      string `yaml:"url"`
+	CAFile   string `yaml:"ca_file,omitempty"`
+	Insecure bool   `yaml:"insecure,omitempty"`
+	TokenID  string `yaml:"token_id,omitempty"`
 	TokenIDFile     string `yaml:"token_id_file,omitempty"`
 	TokenSecret     string `yaml:"token_secret,omitempty"`
 	TokenSecretFile string `yaml:"token_secret_file,omitempty"`
 	Username        string `yaml:"username,omitempty"`
 	Password        string `yaml:"password,omitempty"`
-	// ClusterName is the selector: pool.List()/pool.Get()/pool.Cluster()
-	// all key on this value. The yaml tag stays "region" for config-file
-	// compatibility with existing deployments.
-	ClusterName string `yaml:"region,omitempty"`
 }
 
 // ProxmoxPool is a pool of Proxmox REST clients, one per configured
@@ -101,6 +101,10 @@ func NewProxmoxPool(config []*ClusterConfig, options ...Option) (*ProxmoxPool, e
 			proxmoxrest.WithUserAgent("go-proxmox-pool/1.0"),
 		}
 
+		if cfg.CAFile != "" {
+			restOpts = append(restOpts, proxmoxrest.WithCACert(cfg.CAFile))
+		}
+
 		if cfg.Username != "" && cfg.Password != "" {
 			restOpts = append(restOpts, proxmoxrest.WithPasswordAuth(cfg.Username, cfg.Password))
 		} else if cfg.TokenID != "" && cfg.TokenSecret != "" {
@@ -111,10 +115,10 @@ func NewProxmoxPool(config []*ClusterConfig, options ...Option) (*ProxmoxPool, e
 
 		client, err := proxmoxrest.New(proxmoxrest.ClientConfig{}, restOpts...)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create Proxmox REST client for cluster %s: %w", cfg.ClusterName, err)
+			return nil, fmt.Errorf("failed to create Proxmox REST client for cluster %s: %w", cfg.Region, err)
 		}
 
-		clients[cfg.ClusterName] = client
+		clients[cfg.Region] = client
 	}
 
 	return &ProxmoxPool{
