@@ -2,10 +2,8 @@ module github.com/sergelogvinov/go-proxmox-pool
 
 go 1.27.1
 
-// replace github.com/sergelogvinov/go-proxmox-rest => ../proxmox/go-proxmox-rest
-
 require (
-	github.com/sergelogvinov/go-proxmox-rest v0.0.0-20260922140521-cb1976ec06d4
+	github.com/sergelogvinov/go-proxmox-rest v0.0.0-20260927180256-030c7f74d41b
 	github.com/stretchr/testify v1.12.1
 )
 

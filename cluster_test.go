@@ -25,6 +25,7 @@ import (
 
 	pxpool "github.com/sergelogvinov/go-proxmox-pool"
 	pxcluster "github.com/sergelogvinov/go-proxmox-rest/cluster"
+	"github.com/sergelogvinov/go-proxmox-rest/cluster/ha"
 	"github.com/sergelogvinov/go-proxmox-rest/fakeapi"
 	"github.com/sergelogvinov/go-proxmox-rest/nodes/lxc"
 	"github.com/sergelogvinov/go-proxmox-rest/nodes/qemu"
@@ -307,6 +308,30 @@ func TestClusterGetNodeHAGroups(t *testing.T) {
 	assert.Equal(t, []string{"group-a"}, groups)
 
 	_, err = c.GetNodeHAGroups(t.Context(), "pve2")
+	assert.Equal(t, pxpool.ErrHAGroupNotFound, err)
+}
+
+// TestClusterGetNodeHAGroupsFallsBackToRulesWhenMigrated covers the case
+// where GET /cluster/ha/groups rejects with the 500 Proxmox returns once a
+// cluster's HA groups have been migrated to HA rules: GetNodeHAGroups must
+// fall back to listing "node-affinity" HA rules instead.
+func TestClusterGetNodeHAGroupsFallsBackToRulesWhenMigrated(t *testing.T) {
+	cl := fakeapi.NewCluster(t, fakeapi.WithNodes("pve1", "pve2"),
+		fakeapi.WithHAGroupsMigrated(),
+		fakeapi.WithHARule("rule-a", ha.RuleTypeNodeAffinity, []string{"vm:100"},
+			fakeapi.WithHARuleNodes("pve1:1")),
+		fakeapi.WithHARule("rule-b", ha.RuleTypeNodeAffinity, []string{"vm:200"},
+			fakeapi.WithHARuleNodes("pve2:1")),
+	)
+
+	pool := newFakePool(t, cl)
+	c := pool.Cluster("cluster-1")
+
+	groups, err := c.GetNodeHAGroups(t.Context(), "pve1")
+	assert.Nil(t, err)
+	assert.Equal(t, []string{"rule-a"}, groups)
+
+	_, err = c.GetNodeHAGroups(t.Context(), "pve3")
 	assert.Equal(t, pxpool.ErrHAGroupNotFound, err)
 }
 
