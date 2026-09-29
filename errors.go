@@ -25,6 +25,10 @@ var (
 	// ErrClusterNotFound is returned when a cluster name has no
 	// configured client in the pool.
 	ErrClusterNotFound = errors.New("cluster not found")
+	// ErrInvalidClusterURL is returned when a ClusterConfig.URL using the
+	// "<scheme>+srv://" convention does not encode a valid
+	// _service._proto.domain SRV name.
+	ErrInvalidClusterURL = errors.New("invalid cluster URL")
 	// ErrHAGroupNotFound is returned when a node belongs to no HA group.
 	ErrHAGroupNotFound = errors.New("ha-group not found")
 	// ErrInstanceNotFound is returned when a VM/LXC instance is not found.

@@ -18,6 +18,7 @@ package proxmoxpool
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -34,7 +35,12 @@ type ClusterConfig struct {
 	// all key on this value.
 	Region string `yaml:"region,omitempty"`
 
-	// Proxmox REST API connection details.
+	// Proxmox REST API connection details. URL is either a plain endpoint
+	// (e.g. https://10.0.0.1:8006/api2/json) or, using the
+	// "<scheme>+srv://" convention, a DNS SRV name to resolve and load
+	// balance across (e.g. https+srv://_pve._tcp.example.com/api2/json,
+	// which looks up the "_pve._tcp.example.com" SRV record and balances
+	// requests across the discovered hosts over https).
 	URL string `yaml:"url"`
 	// CAFile is a path, or comma-separated list of paths, to PEM CA bundle(s) to trust.
 	CAFile string `yaml:"ca_file,omitempty"`
@@ -99,11 +105,15 @@ func NewProxmoxPool(config []*ClusterConfig, options ...Option) (*ProxmoxPool, e
 			}
 		}
 
-		restOpts := []proxmoxrest.Option{
-			proxmoxrest.WithURL(cfg.URL),
+		urlOpts, err := clusterURLOptions(cfg.URL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to configure Proxmox REST client for cluster %s: %w", cfg.Region, err)
+		}
+
+		restOpts := append([]proxmoxrest.Option{
 			proxmoxrest.WithInsecure(cfg.Insecure),
 			proxmoxrest.WithUserAgent("go-proxmox-pool/1.0"),
-		}
+		}, urlOpts...)
 
 		if cfg.CAFile != "" {
 			caFiles := strings.Split(cfg.CAFile, ",")
@@ -169,6 +179,43 @@ func (p *ProxmoxPool) Set(cluster string, client *proxmoxrest.Client) {
 // surfaces from the handle's first actual call instead.
 func (p *ProxmoxPool) Cluster(cluster string) *Cluster {
 	return &Cluster{pool: p, name: cluster}
+}
+
+// clusterURLOptions turns a ClusterConfig.URL into the proxmoxrest options
+// that connect to it. A plain URL (https://host:port/path) maps straight to
+// WithURL. A "<scheme>+srv://_service._proto.domain[/path]" URL instead
+// resolves the named DNS SRV record and load balances across the discovered
+// hosts via WithSRVWeightedRoundRobin, per the "<scheme>+srv://" convention
+// documented on ClusterConfig.URL.
+func clusterURLOptions(rawURL string) ([]proxmoxrest.Option, error) {
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return nil, fmt.Errorf("%w %q: %w", ErrInvalidClusterURL, rawURL, err)
+	}
+
+	scheme, isSRV := strings.CutSuffix(strings.ToLower(parsed.Scheme), "+srv")
+	if !isSRV {
+		return []proxmoxrest.Option{proxmoxrest.WithURL(rawURL)}, nil
+	}
+
+	labels := strings.Split(parsed.Hostname(), ".")
+	if len(labels) < 3 || !strings.HasPrefix(labels[0], "_") || !strings.HasPrefix(labels[1], "_") {
+		return nil, fmt.Errorf("%w %q: host must be of the form _service._proto.domain", ErrInvalidClusterURL, rawURL)
+	}
+
+	service := strings.TrimPrefix(labels[0], "_")
+	proto := strings.TrimPrefix(labels[1], "_")
+	domain := strings.Join(labels[2:], ".")
+
+	opts := []proxmoxrest.Option{
+		proxmoxrest.WithSRVWeightedRoundRobin(service, proto, domain, scheme),
+	}
+
+	if path := strings.TrimSuffix(parsed.Path, "/"); path != "" {
+		opts = append(opts, proxmoxrest.WithBasePath(path))
+	}
+
+	return opts, nil
 }
 
 func readValueFromFile(path string) (string, error) {

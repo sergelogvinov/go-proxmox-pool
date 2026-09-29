@@ -97,6 +97,20 @@ func TestNewClientWithCredentialsFromFile(t *testing.T) {
 	assert.Equal(t, "secret", cfg[0].TokenSecret)
 }
 
+func TestNewClientRejectsInvalidSRVURL(t *testing.T) {
+	cfg := []*pxpool.ClusterConfig{
+		{
+			URL:    "https+srv://example.com/api2/json",
+			Region: "cluster-1",
+		},
+	}
+
+	pxClient, err := pxpool.NewProxmoxPool(cfg)
+	assert.NotNil(t, err)
+	assert.Nil(t, pxClient)
+	assert.ErrorIs(t, err, pxpool.ErrInvalidClusterURL)
+}
+
 func TestNewClientRejectsNegativeCacheTTL(t *testing.T) {
 	cfg := newClusterEnv()
 
