@@ -1,0 +1,17 @@
+clusters:
+  # Name of the cluster, metadata for identification
+  - name: Cluster-1
+    # Region name
+    region: Region-1
+
+    # Proxmox API URL
+    url: https://cluster-api-1.example.com:8006/api2/json
+    ca_file: "/etc/proxmox/ca.crt"  # Optional, path(s) to the CA certificate file(s), comma-separated
+    # Skip the certificate verification, if needed
+    insecure: false
+
+    # Proxmox api token
+    token_id: "kubernetes-csi@pve!csi"
+    token_id_file: "/etc/proxmox/token_id"          # Optional, alternative to token_id
+    token_secret: "secret"
+    token_secret_file: "/etc/proxmox/token_secret"  # Optional, alternative to token_secret

@@ -1,7 +1,5 @@
-github.com/sergelogvinov/go-proxmox-rest v0.0.0-20260922140521-cb1976ec06d4 h1:h8hEWx00sIUCKzjU6kYPA3kpu2BrbsLG+mCxGRSCCZ4=
-github.com/sergelogvinov/go-proxmox-rest v0.0.0-20260922140521-cb1976ec06d4/go.mod h1:3h6cO7bTmFdTxtJhtkAMMgedVh5lBp6xreaYY7D1VaE=
-github.com/sergelogvinov/go-proxmox-rest v0.0.0-20260927180256-030c7f74d41b h1:eYFeG8JDCAN90UM0fXgnqTGV5Q0zKw0LlLBWJaqOGpA=
-github.com/sergelogvinov/go-proxmox-rest v0.0.0-20260927180256-030c7f74d41b/go.mod h1:3h6cO7bTmFdTxtJhtkAMMgedVh5lBp6xreaYY7D1VaE=
+github.com/sergelogvinov/go-proxmox-rest v0.1.0 h1:rP3UcS6HgxqKloUI/JR3+r1gssW2Ez46j2jPpgcgAHY=
+github.com/sergelogvinov/go-proxmox-rest v0.1.0/go.mod h1:3h6cO7bTmFdTxtJhtkAMMgedVh5lBp6xreaYY7D1VaE=
 github.com/stretchr/testify v1.12.1 h1:EuwCh5fleGS7H32xRwO3wRGT7DxrDhLAT6FF8MpWDWE=
 github.com/stretchr/testify v1.12.1/go.mod h1:MDEgiDPPsNp5cuIrHPPCyornHKgEVbtFUmoNlxoYthg=
 go.yaml.in/yaml/v3 v3.0.5 h1:N6y/pJk8buWs9NY5ERU2HSMfm+IuD/OtfdAnq6kESPw=

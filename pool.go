@@ -35,8 +35,10 @@ type ClusterConfig struct {
 	Region string `yaml:"region,omitempty"`
 
 	// Proxmox REST API connection details.
-	URL             string `yaml:"url"`
-	CAFile          string `yaml:"ca_file,omitempty"`
+	URL string `yaml:"url"`
+	// CAFile is a path, or comma-separated list of paths, to PEM CA bundle(s) to trust.
+	CAFile string `yaml:"ca_file,omitempty"`
+
 	Insecure        bool   `yaml:"insecure,omitempty"`
 	TokenID         string `yaml:"token_id,omitempty"`
 	TokenIDFile     string `yaml:"token_id_file,omitempty"`
@@ -104,7 +106,12 @@ func NewProxmoxPool(config []*ClusterConfig, options ...Option) (*ProxmoxPool, e
 		}
 
 		if cfg.CAFile != "" {
-			restOpts = append(restOpts, proxmoxrest.WithCACert(cfg.CAFile))
+			caFiles := strings.Split(cfg.CAFile, ",")
+			for i, f := range caFiles {
+				caFiles[i] = strings.TrimSpace(f)
+			}
+
+			restOpts = append(restOpts, proxmoxrest.WithCACert(caFiles...))
 		}
 
 		if cfg.Username != "" && cfg.Password != "" {
