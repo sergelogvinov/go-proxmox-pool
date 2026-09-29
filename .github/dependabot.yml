@@ -20,12 +20,6 @@ updates:
       actions:
         patterns:
           - "actions/*"
-          - "azure/*"
-      docker:
-        patterns:
-          - "docker/*"
-      other:
-        patterns:
           - "golangci/*"
 
   - package-ecosystem: "gomod"
@@ -42,11 +36,6 @@ updates:
     cooldown:
       default-days: 7
     groups:
-      k8s.io:
+      sergelogvinov:
         patterns:
-          - "k8s.io/api"
-          - "k8s.io/apimachinery"
-          - "k8s.io/client-go"
-          - "k8s.io/cloud-provider"
-          - "k8s.io/component-base"
-          - "k8s.io/mount-utils"
+          - "github.com/sergelogvinov"
