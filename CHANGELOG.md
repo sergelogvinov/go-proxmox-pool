@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/sergelogvinov/go-proxmox-pool/compare/v0.1.0...v0.2.0) (2026-09-29)
+
+
+### Features
+
+* add support for SRV URL in clusterConfig ([0aca8a8](https://github.com/sergelogvinov/go-proxmox-pool/commit/0aca8a82243314165661dca72535c562e1d88951))
+
 ## [0.1.0](https://github.com/sergelogvinov/go-proxmox-pool/compare/v0.0.1...v0.1.0) (2026-09-29)
 
 
