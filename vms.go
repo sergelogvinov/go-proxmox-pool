@@ -27,7 +27,7 @@ import (
 	proxmoxrest "github.com/sergelogvinov/go-proxmox-rest"
 	pxcluster "github.com/sergelogvinov/go-proxmox-rest/cluster"
 	"github.com/sergelogvinov/go-proxmox-rest/nodes/qemu"
-	"github.com/sergelogvinov/go-proxmox-rest/nodes/tasks"
+	"github.com/sergelogvinov/go-proxmox-rest/task"
 )
 
 // powerActionTimeout bounds how long a stop/delete task is waited on.
@@ -181,26 +181,20 @@ func (c *Cluster) DeleteVM(ctx context.Context, vm *pxcluster.Resource) error {
 	}
 
 	if status.Status == qemu.VMStatusRunning {
-		upid, err := px.Nodes(vm.Node).Qemu().Stop(ctx, vm.VMID, nil)
+		t, err := px.Nodes(vm.Node).Qemu().Stop(ctx, vm.VMID, nil)
 		if err != nil {
 			return fmt.Errorf("failed to stop vm %d: %w", vm.VMID, err)
 		}
 
-		if upid != "" {
-			if err := px.Nodes(vm.Node).Tasks().Wait(ctx, upid, &tasks.WaitOptions{Timeout: powerActionTimeout}); err != nil {
-				return fmt.Errorf("unable to stop vm %d: %w", vm.VMID, err)
-			}
+		if err := t.Wait(ctx, &task.WaitOptions{Timeout: powerActionTimeout}); err != nil {
+			return fmt.Errorf("unable to stop vm %d: %w", vm.VMID, err)
 		}
 	}
 
-	upid, err := px.Nodes(vm.Node).Qemu().Delete(ctx, vm.VMID, nil)
+	t, err := px.Nodes(vm.Node).Qemu().Delete(ctx, vm.VMID, nil)
 	if err != nil {
 		return fmt.Errorf("cannot delete vm with id %d: %w", vm.VMID, err)
 	}
 
-	if upid == "" {
-		return nil
-	}
-
-	return px.Nodes(vm.Node).Tasks().Wait(ctx, upid, &tasks.WaitOptions{Timeout: powerActionTimeout})
+	return t.Wait(ctx, &task.WaitOptions{Timeout: powerActionTimeout})
 }
