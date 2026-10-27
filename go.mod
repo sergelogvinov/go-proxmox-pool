@@ -3,7 +3,7 @@ module github.com/sergelogvinov/go-proxmox-pool
 go 1.27.1
 
 require (
-	github.com/sergelogvinov/go-proxmox-rest v0.1.2-0.20261021120947-507754eb5acd
+	github.com/sergelogvinov/go-proxmox-rest v0.1.2-0.20261027091835-894de17e4888
 	github.com/stretchr/testify v1.12.1
 )
 
