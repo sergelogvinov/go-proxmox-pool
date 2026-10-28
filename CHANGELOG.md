@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.0](https://github.com/sergelogvinov/go-proxmox-pool/compare/v0.2.0...v0.3.0) (2026-10-28)
+
+
+### Features
+
+* update go-proxmox-rest dependency ([2a32266](https://github.com/sergelogvinov/go-proxmox-pool/commit/2a32266e9e71d0944a106fd2ca2c87f42cdf8fc6))
+
+
+### Bug Fixes
+
+* update go-proxmox-rest dependency ([33ae9bc](https://github.com/sergelogvinov/go-proxmox-pool/commit/33ae9bc299835081310cec2a3ecd5247d5f13d65))
+* update go-proxmox-rest dependency ([85c979d](https://github.com/sergelogvinov/go-proxmox-pool/commit/85c979d9e23ecc4396e04f24500bb9ced990d33b))
+
 ## [0.2.0](https://github.com/sergelogvinov/go-proxmox-pool/compare/v0.1.0...v0.2.0) (2026-10-05)
 
 
